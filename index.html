@@ -2,38 +2,44 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ford Smart Badge - Fixed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Ford Mobile Badge</title>
 <style>
-    /* --- CORE VARIABLES --- */
+    /* --- BRANDING --- */
     :root {
         --ford-blue: #003478;
         --ford-light-blue: #eef4ff;
         --text-dark: #1a1a1a;
-        --warning: #f57f20;
+        --warning: #d32f2f; /* Using Red for urgent break alerts */
         --bg-gray: #f4f5f8;
     }
 
+    /* --- MOBILE RESET --- */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body {
-        font-family: "Ford Antenna", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: "Ford Antenna", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
         background: var(--bg-gray);
         display: flex;
         flex-direction: column;
         align-items: center;
         padding: 20px;
         margin: 0;
+        min-height: 100vh;
     }
 
-    /* --- WIDGET CONTAINER (The Anchor) --- */
-    /* IMPORTANT: position: relative is the key fix here */
+    /* --- WIDGET CONTAINER --- */
     .smart-badge {
-        position: relative; /* <--- THIS KEEPS THE POPUP INSIDE */
         background: white;
         width: 100%;
-        max-width: 360px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        overflow: hidden; /* Ensures corners clip the content */
+        max-width: 360px; /* Fits standard phones perfectly */
+        border-radius: 16px; /* Rounder corners for mobile feel */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        /* Height auto allows it to fit content, but min-height prevents jumping */
+        min-height: 280px; 
     }
 
     /* --- HEADER --- */
@@ -46,63 +52,62 @@
         border-bottom: 1px solid #dae7ff;
     }
 
-    .status-label { font-size: 11px; font-weight: 700; color: var(--ford-blue); text-transform: uppercase; margin-bottom: 4px; display: block; }
-    .time-display { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+    .status-label { font-size: 11px; font-weight: 800; color: var(--ford-blue); text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
+    .time-display { font-size: 22px; font-weight: 800; color: var(--text-dark); font-variant-numeric: tabular-nums; }
     
-    .status-icon { height: 32px; width: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #e3f2fd; color: var(--ford-blue); }
-    .status-icon.break { background: #fff3e0; color: var(--warning); animation: pulse 2s infinite; }
+    .status-icon { height: 36px; width: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #e3f2fd; color: var(--ford-blue); }
+    .status-icon.break { background: #ffebee; color: var(--warning); animation: pulse 2s infinite; }
 
-    /* --- BODY --- */
-    .badge-content { padding: 20px; }
+    /* --- CONTENT AREA --- */
+    .view-container { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+
+    /* VIEW 1: DASHBOARD */
+    .view-dashboard { display: block; animation: fadeIn 0.3s ease; }
     
     .user-section { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-    .avatar { width: 50px; height: 50px; border-radius: 50%; background: #333; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
-    .user-info h2 { margin: 0; font-size: 16px; color: var(--text-dark); }
-    .user-info p { margin: 2px 0 0 0; font-size: 12px; color: #666; }
+    .avatar { width: 50px; height: 50px; border-radius: 50%; background: #333; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .user-info h2 { margin: 0; font-size: 17px; color: var(--text-dark); }
+    .user-info p { margin: 2px 0 0 0; font-size: 13px; color: #666; }
 
-    /* --- BUTTONS --- */
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .action-btn { border: 1px solid #eee; background: white; padding: 15px 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: background 0.2s; }
-    .action-btn:hover { background: #f9f9f9; }
-    .action-btn svg { width: 24px; height: 24px; fill: var(--ford-blue); }
+    /* TOUCH TARGETS (BUTTONS) */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .action-btn { 
+        border: 1px solid #eee; background: white; 
+        padding: 16px; /* Large touch target */
+        border-radius: 12px; cursor: pointer; 
+        display: flex; flex-direction: column; align-items: center; gap: 8px; 
+        transition: transform 0.1s, background 0.2s; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .action-btn:active { transform: scale(0.96); background: #f5f5f5; } /* Mobile click feel */
+    .action-btn svg { width: 28px; height: 28px; fill: var(--ford-blue); }
     .action-label { font-size: 12px; font-weight: 600; color: #444; }
 
-    /* --- THE FIX: QR OVERLAY --- */
-    .qr-overlay {
-        position: absolute; /* Stays inside .smart-badge because of relative parent */
-        top: 0; left: 0; width: 100%; height: 100%; /* Covers card only */
-        background: rgba(255,255,255,0.98);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 100; /* Stays on top of card content */
-        
-        /* Visibility Toggles */
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s;
-    }
+    /* VIEW 2: QR CODE */
+    .view-qr { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: slideUp 0.3s ease; height: 100%; }
     
-    .qr-overlay.active {
-        opacity: 1;
-        pointer-events: all;
-    }
-
-    /* Context Bar (Orange Alert) */
     .qr-context-bar {
-        position: absolute; top: 0; left: 0; right: 0;
-        background: var(--warning); color: white;
-        padding: 10px; text-align: center; font-weight: 700; font-size: 13px;
-        transform: translateY(-100%); transition: transform 0.3s;
+        width: 100%; background: var(--warning); color: white;
+        font-size: 13px; font-weight: 700; text-align: center; padding: 8px;
+        border-radius: 6px; margin-bottom: 15px; display: none;
     }
-    .qr-context-bar.show { transform: translateY(0); }
 
-    /* Simulator Controls */
-    .sim-controls { margin-top: 20px; padding: 10px; background: #eee; border-radius: 8px; font-size: 12px; text-align: center; }
-    .sim-btn { margin: 0 5px; padding: 5px 10px; cursor: pointer; background: #333; color: white; border: none; border-radius: 4px; }
-    
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 127, 32, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(245, 127, 32, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 127, 32, 0); } }
+    .close-btn {
+        margin-top: 20px; width: 100%; padding: 14px;
+        font-size: 14px; font-weight: 700; color: #555;
+        background: #f0f0f0; border: none; border-radius: 8px;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .close-btn:active { background: #e0e0e0; }
+
+    /* --- ANIMATIONS --- */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
+
+    /* --- SIMULATOR CONTROLS --- */
+    .sim-controls { margin-top: 30px; display:flex; gap:10px; opacity: 0.8; }
+    .sim-btn { padding: 8px 12px; font-size: 12px; background: #333; color: white; border: none; border-radius: 20px; }
 </style>
 </head>
 <body>
@@ -115,11 +120,11 @@
             <div class="time-display" id="time-display">04h 15m</div>
         </div>
         <div class="status-icon" id="status-icon">
-            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>
+            <svg style="width:22px;height:22px;fill:currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
         </div>
     </div>
 
-    <div class="badge-content">
+    <div id="view-main" class="view-container view-dashboard">
         <div class="user-section">
             <div class="avatar">JD</div>
             <div class="user-info">
@@ -129,31 +134,33 @@
         </div>
 
         <div class="action-grid">
-            <div class="action-btn" onclick="showQR('Time Clock')">
-                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <div class="action-btn" onclick="openQR('Time Clock')">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                 <span class="action-label">Time Clock</span>
             </div>
-            <div class="action-btn" onclick="showQR('Lunch Pay')">
+            <div class="action-btn" onclick="openQR('Cafeteria')">
                 <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
                 <span class="action-label">Lunch Pay</span>
             </div>
         </div>
     </div>
 
-    <div class="qr-overlay" id="qr-layer" onclick="hideQR()">
-        <div class="qr-context-bar" id="qr-alert">Break Ending in 14:22</div>
+    <div id="view-qr" class="view-container view-qr">
+        <div id="qr-alert" class="qr-context-bar">⚠️ Break Ending in 14:22</div>
         
-        <h3 id="qr-title" style="margin-bottom:15px; color:#333;">Scan Badge</h3>
+        <div style="font-weight:700; font-size:18px; margin-bottom:15px; color:#333;" id="qr-title">Scan Badge</div>
         
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=FORD-ID-123" 
-             style="width:160px; height:160px; border:4px solid #fff; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-             
-        <p style="color:#666; font-size:12px; margin-top:20px; font-weight:600;">Tap anywhere to close</p>
+             style="width:160px; height:160px; mix-blend-mode:multiply; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+        <button class="close-btn" onclick="closeQR()">Done</button>
     </div>
+
 </div>
+
 <div class="sim-controls">
-    <button class="sim-btn" onclick="setMode('shift')">Simulate: Working</button>
-    <button class="sim-btn" onclick="setMode('break')">Simulate: On Break</button>
+    <button class="sim-btn" onclick="setMode('shift')">Working</button>
+    <button class="sim-btn" onclick="setMode('break')">Break</button>
 </div>
 
 <script>
@@ -165,34 +172,41 @@
         const label = document.getElementById('status-label');
         const time = document.getElementById('time-display');
         const icon = document.getElementById('status-icon');
+        const alert = document.getElementById('qr-alert');
 
         if(mode === 'shift') {
-            label.innerText = "Shift Progress";
+            label.innerText = "Shift Remaining";
             time.innerText = "04h 15m";
             time.style.color = "#1a1a1a";
             icon.className = "status-icon";
+            icon.innerHTML = '<svg style="width:22px;height:22px;fill:currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
             header.style.background = "#eef4ff"; 
+            alert.style.display = 'none';
         } else {
             label.innerText = "Break Remaining";
             time.innerText = "14:22";
             time.style.color = "#d32f2f";
             icon.className = "status-icon break";
-            header.style.background = "#fff3e0"; 
+            icon.innerHTML = '<svg style="width:22px;height:22px;fill:currentColor" viewBox="0 0 24 24"><path d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg>';
+            header.style.background = "#ffebee"; 
         }
     }
 
-    function showQR(title) {
+    function openQR(title) {
+        document.getElementById('view-main').style.display = 'none';
+        document.getElementById('view-qr').style.display = 'flex';
         document.getElementById('qr-title').innerText = title;
-        document.getElementById('qr-layer').classList.add('active');
-        
+
         if(currentMode === 'break') {
-            document.getElementById('qr-alert').classList.add('show');
+            document.getElementById('qr-alert').style.display = 'block';
+        } else {
+            document.getElementById('qr-alert').style.display = 'none';
         }
     }
 
-    function hideQR() {
-        document.getElementById('qr-layer').classList.remove('active');
-        document.getElementById('qr-alert').classList.remove('show');
+    function closeQR() {
+        document.getElementById('view-qr').style.display = 'none';
+        document.getElementById('view-main').style.display = 'block';
     }
 </script>
 
