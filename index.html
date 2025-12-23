@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ford Worker Widget - My Badge</title>
+<style>
+    /* --- INHERITED FORD BRANDING --- */
+    :root {
+        --ford-blue: #003478;
+        --ford-light-blue: #eef4ff;
+        --ford-gray-bg: #f4f5f8;
+        --text-dark: #1a1a1a;
+        --text-light: #555555;
+    }
+
+    body {
+        font-family: "Ford Antenna", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--ford-gray-bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    /* --- WIDGET CONTAINER --- */
+    .widget-badge {
+        background: white;
+        width: 100%;
+        max-width: 340px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-top: 6px solid var(--ford-blue);
+        position: relative;
+    }
+
+    .widget-badge:active {
+        transform: scale(0.98);
+    }
+
+    /* --- WIDGET CONTENT --- */
+    .badge-header {
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .ford-logo-sm {
+        height: 18px;
+        opacity: 0.8;
+    }
+
+    .badge-status {
+        font-size: 11px;
+        font-weight: 700;
+        color: #2e7d32; /* Success Green */
+        background: #e8f5e9;
+        padding: 4px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-body {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .employee-photo {
+        width: 60px;
+        height: 60px;
+        background-color: var(--ford-light-blue);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ford-blue);
+        font-weight: 700;
+        font-size: 20px;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .employee-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .emp-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+
+    .emp-role {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-bottom: 2px;
+    }
+
+    .emp-id {
+        font-size: 11px;
+        color: #999;
+        font-family: monospace;
+        letter-spacing: 1px;
+    }
+
+    .tap-hint {
+        background: var(--ford-light-blue);
+        color: var(--ford-blue);
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+        padding: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- MODAL (THE QR REVEAL) --- */
+    .qr-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,52,120, 0.95); /* Ford Blue Overlay */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        backdrop-filter: blur(4px);
+    }
+
+    .qr-modal.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .qr-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        max-width: 300px;
+        width: 85%;
+    }
+
+    .qr-image {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 15px;
+    }
+
+    .qr-timer {
+        height: 4px;
+        background: #eee;
+        border-radius: 2px;
+        width: 100%;
+        margin-top: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .qr-timer-bar {
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        background: var(--ford-blue);
+        width: 100%;
+        /* Animation added via JS on open */
+    }
+
+    .close-hint {
+        color: white;
+        margin-top: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+</style>
+</head>
+<body>
+
+<div class="widget-badge" onclick="openBadge()">
+    <div class="badge-header">
+        <span style="font-weight:800; color:var(--ford-blue); letter-spacing:-0.5px; font-size:18px; font-style:italic;">Ford</span>
+        <span class="badge-status">Active Shift</span>
+    </div>
+    <div class="badge-body">
+        <div class="employee-photo">JD</div>
+        <div class="employee-details">
+            <span class="emp-name">John Doe</span>
+            <span class="emp-role">Final Assembly • Zone C</span>
+            <span class="emp-id">ID: •••••8842</span>
+        </div>
+    </div>
+    <div class="tap-hint">Tap to Scan</div>
+</div>
+
+<div class="qr-modal" id="qrModal" onclick="closeBadge()">
+    <div class="qr-card">
+        <h3 style="margin:0 0 15px 0; color:#1a1a1a;">Time Clock / Access</h3>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=FORD-EMPLOYEE-8842-AUTH-TOKEN" class="qr-image" alt="QR Code">
+        
+        <div style="font-size:12px; color:#555;">Scan at Turnstile or Register</div>
+        
+        <div class="qr-timer">
+            <div class="qr-timer-bar" id="timerBar"></div>
+        </div>
+    </div>
+    <div class="close-hint">Tap anywhere to close</div>
+</div>
+
+<script>
+    function openBadge() {
+        const modal = document.getElementById('qrModal');
+        const bar = document.getElementById('timerBar');
+        
+        modal.classList.add('active');
+        
+        // Simulate a security timeout visual
+        bar.style.transition = 'none';
+        bar.style.width = '100%';
+        setTimeout(() => {
+            bar.style.transition = 'width 5s linear';
+            bar.style.width = '0%';
+        }, 100);
+    }
+
+    function closeBadge() {
+        document.getElementById('qrModal').classList.remove('active');
+    }
+</script>
+
+</body>
+</html>
